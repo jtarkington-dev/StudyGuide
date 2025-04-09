@@ -1,15 +1,19 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_ANON_KEY
 );
 
-export default async (req, res) => {
-    const { title, content, tags } = await req.json();
+export default async function handler(req, context) {
+    const body = await req.json();
+    const { title, content, tags } = body;
 
     if (!title || !content) {
-        return res.status(400).json({ error: "Title and content required." });
+        return new Response(JSON.stringify({ error: "Title and content required." }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 
     const tomorrow = new Date();
@@ -20,8 +24,14 @@ export default async (req, res) => {
     ]);
 
     if (error) {
-        return res.status(500).json({ error: error.message });
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 
-    return res.status(200).json({ success: true });
-};
+    return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+    });
+}

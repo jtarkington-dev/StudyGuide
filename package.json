@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4"
+  },
+  "name": "studyguide",
+  "description": "**StudyGuide** is a smart personal learning system that helps you take notes, track what needs to be reviewed, and automatically generate quizzes using AI based on your study tags.",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jtarkington-dev/StudyGuide.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jtarkington-dev/StudyGuide/issues"
+  },
+  "homepage": "https://github.com/jtarkington-dev/StudyGuide#readme"
+}

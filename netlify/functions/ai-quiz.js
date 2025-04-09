@@ -21,7 +21,7 @@ export default async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "deepseek-chat",
+                model: "deepseek/deepseek-chat-v3-0324:free",
                 messages: [
                     { role: "system", content: "You are a quiz-making AI assistant." },
                     { role: "user", content: prompt }
