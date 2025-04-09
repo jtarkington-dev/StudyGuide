@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudyGuide</title>
+    <link rel="stylesheet" href="src/styles/style.css" />
+</head>
+
+<body>
+    <header>
+        <h1>StudyGuide</h1>
+        <button id="newNoteBtn">+ New Note</button>
+        <div id="reviewBox" class="review-box">
+            <h2> Review Now</h2>
+            <ul id="reviewList"></ul>
+        </div>
+        <button id="startQuizBtn">Start Quiz</button>
+
+    </header>
+
+    <main id="notesContainer"></main>
+
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">New Note</h2>
+            <input type="text" id="noteTitle" placeholder="Note Title" />
+            <textarea id="noteContent" rows="10" placeholder="Write your notes here..."></textarea>
+            <input type="text" id="noteTags" placeholder="Tags (comma separated)" />
+            <div class="modal-buttons">
+                <button class="save-btn" id="saveBtn">Save</button>
+                <button class="cancel-btn" id="createCloseBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <h2 id="viewTitle"></h2>
+            <p id="viewContent"></p>
+            <p class="tags" id="viewTags"></p>
+            <button class="cancel-btn" id="viewCloseBtn">Close</button>
+        </div>
+    </div>
+    <div id="quizTagModal" class="modal">
+        <div class="modal-content">
+            <h2>Select Tag to Quiz</h2>
+            <select id="tagSelector">
+                <option value="">Loading tags...</option>
+            </select>
+            <div class="modal-buttons">
+                <button id="launchQuizBtn" class="save-btn">Start</button>
+                <button id="cancelQuizBtn" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module" src="src/scripts/app.js"></script>
+</body>
+
+</html>

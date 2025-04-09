@@ -1,0 +1,185 @@
+:root {
+    --bg-color: #12121a;
+    --accent-color: #7dd3fc;
+    --text-color: #e2e8f0;
+    --card-bg: #1e1e2e;
+    --card-border: #334155;
+    --highlight: #94a3b8;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+header {
+    padding: 1rem 2rem;
+    background: #1a1a24;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    color: var(--accent-color);
+    font-size: 1.5rem;
+}
+
+#newNoteBtn {
+    background: var(--accent-color);
+    border: none;
+    color: #000;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+main {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.note-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--accent-color);
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.note-card:hover {
+    transform: scale(1.02);
+}
+
+.note-title {
+    font-size: 1.1rem;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.note-preview {
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+    color: #ccc;
+}
+
+.note-tags {
+    font-size: 0.8rem;
+    color: var(--highlight);
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 2rem;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 10px;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: var(--accent-color);
+}
+
+.modal-content input,
+.modal-content textarea {
+    width: 100%;
+    background: #0f0f17;
+    border: 1px solid var(--card-border);
+    color: var(--text-color);
+    padding: 0.8rem;
+    font-size: 1rem;
+    margin-top: 1rem;
+    border-radius: 6px;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+.modal-buttons button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.save-btn {
+    background: var(--accent-color);
+    color: black;
+}
+
+.cancel-btn {
+    background: #475569;
+    color: white;
+}
+
+.review-box {
+    background: #1e1e2e;
+    border: 2px solid #7dd3fc;
+    padding: 1rem;
+    margin: 1rem 2rem;
+    border-radius: 10px;
+}
+
+.review-box h2 {
+    color: #7dd3fc;
+    margin-top: 0;
+}
+
+.review-box ul {
+    list-style: none;
+    padding-left: 1rem;
+    margin: 0;
+}
+
+.review-box li {
+    color: #e2e8f0;
+    margin: 0.4rem 0;
+    cursor: pointer;
+}
+
+.review-box li:hover {
+    text-decoration: underline;
+}
+
+#tagList {
+    list-style: none;
+    padding: 0;
+}
+
+#tagList li {
+    margin: 0.5rem 0;
+    padding: 0.5rem 1rem;
+    background: #2a2a40;
+    color: #7dd3fc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#tagList li:hover {
+    background: #334155;
+}
