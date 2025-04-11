@@ -1,12 +1,12 @@
+// Allow maximum time Netlify permits (26 seconds for sync functions)
+export const config = {
+    timeout: 26
+};
+
 export async function handler(event, context) {
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-
-    // ⛔ DEBUG LOG for Netlify deploy logs
-    console.log("🔍 OPENROUTER_API_KEY:", OPENROUTER_API_KEY ? "✅ Loaded" : "❌ MISSING");
-
     const { notes, tag } = JSON.parse(event.body);
 
-    // 🧱 Sanity check
     if (!notes || notes.length === 0) {
         return {
             statusCode: 400,
@@ -14,29 +14,20 @@ export async function handler(event, context) {
         };
     }
 
-    // 🔐 Check if env key is missing
-    if (!OPENROUTER_API_KEY) {
-        console.error("❌ OPENROUTER_API_KEY is not defined in environment variables.");
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: "Missing OpenRouter API key" }),
-        };
-    }
-
     const prompt = `
-You're an intelligent quiz-making assistant.
-
-Generate 10 quiz questions from the notes below using this format:
-
-[FORMAT]
-1. Question text? a) Option A b) Option B c) Option C d) Option D
-**Answer:** b \`correct value here\`
-**Why:** explanation here
-
-Focus on this topic tag: "${tag}"
-NOTES:
-${notes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n")}
-`;
+  You are a helpful quiz-generating AI.
+  
+  Based on the following notes, create 5 quiz questions focused on the tag: "${tag}"
+  
+  Use this format exactly:
+  
+  1. Question text? a) Option A b) Option B c) Option C d) Option D  
+  **Answer:** b \`correct value here\`  
+  **Why:** explanation here
+  
+  NOTES:
+  ${notes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n")}
+  `;
 
     try {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -55,8 +46,7 @@ ${notes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n")}
         });
 
         const data = await response.json();
-
-        console.log("✅ OpenRouter response:", JSON.stringify(data, null, 2));
+        console.log("✅ OpenRouter Quiz Response:", JSON.stringify(data, null, 2));
 
         const reply = data.choices?.[0]?.message?.content || "No response";
 
@@ -64,8 +54,9 @@ ${notes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n")}
             statusCode: 200,
             body: JSON.stringify({ quiz: reply }),
         };
+
     } catch (err) {
-        console.error("❌ API Error:", err);
+        console.error("❌ AI Quiz Error:", err.message);
         return {
             statusCode: 500,
             body: JSON.stringify({ error: err.message }),
