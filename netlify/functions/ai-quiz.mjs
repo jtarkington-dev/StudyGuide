@@ -1,6 +1,5 @@
-// Allow maximum time Netlify permits (26 seconds for sync functions)
 export const config = {
-    timeout: 26
+    timeout: 26,
 };
 
 export async function handler(event, context) {
@@ -15,15 +14,17 @@ export async function handler(event, context) {
     }
 
     const prompt = `
-  You are a helpful quiz-generating AI.
+  You are a helpful quiz-generating AI assistant.
   
-  Based on the following notes, create 5 quiz questions focused on the tag: "${tag}"
+  Based on the following study notes, create exactly 10 quiz questions focused on the tag: "${tag}".
   
-  Use this format exactly:
+  Use this exact format for each question:
   
   1. Question text? a) Option A b) Option B c) Option C d) Option D  
   **Answer:** b \`correct value here\`  
   **Why:** explanation here
+  
+  Only generate the questions — do not add commentary or extras.
   
   NOTES:
   ${notes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n")}
@@ -34,15 +35,15 @@ export async function handler(event, context) {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 model: "deepseek/deepseek-chat-v3-0324:free",
                 messages: [
                     { role: "system", content: "You are a quiz-making AI assistant." },
-                    { role: "user", content: prompt }
-                ]
-            })
+                    { role: "user", content: prompt },
+                ],
+            }),
         });
 
         const data = await response.json();
@@ -54,7 +55,6 @@ export async function handler(event, context) {
             statusCode: 200,
             body: JSON.stringify({ quiz: reply }),
         };
-
     } catch (err) {
         console.error("❌ AI Quiz Error:", err.message);
         return {

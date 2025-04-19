@@ -16,11 +16,18 @@ export default async function handler(req, context) {
         });
     }
 
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
 
     const { error } = await supabase.from('notes').insert([
-        { title, content, tags, next_review: tomorrow.toISOString() }
+        {
+            title,
+            content,
+            tags,
+            created_at: now.toISOString(),
+            next_review: tomorrow.toISOString()
+        }
     ]);
 
     if (error) {

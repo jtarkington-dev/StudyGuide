@@ -273,3 +273,100 @@ main {
     font-weight: bold;
     margin-top: 1rem;
 }
+
+.floating-review-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    background: #00ffff;
+    color: black;
+    border: none;
+    padding: 0.7rem 1.2rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+}
+
+.review-panel {
+    position: fixed;
+    top: 60px;
+    right: 1rem;
+    background: #1e1e2e;
+    border: 2px solid #00ffff;
+    border-radius: 10px;
+    padding: 1rem;
+    z-index: 999;
+    max-height: 300px;
+    width: 240px;
+    overflow-y: auto;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.review-panel.hidden {
+    display: none;
+}
+
+.review-panel h3 {
+    margin-top: 0;
+    color: #00ffff;
+    font-size: 1.1rem;
+}
+
+.review-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.review-panel li {
+    padding: 0.4rem 0;
+    color: white;
+    cursor: pointer;
+}
+
+.review-panel li:hover {
+    text-decoration: underline;
+}
+
+.header-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.floating-review {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    padding: 0.5rem 1rem;
+    background: #7dd3fc;
+    color: #000;
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+.floating-review:hover {
+    background: #38bdf8;
+}
+
+.glow-btn {
+    background: #7dd3fc;
+    color: #000;
+    border: none;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.glow-btn:hover {
+    background-color: #38bdf8;
+}

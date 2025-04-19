@@ -10,6 +10,7 @@ let incorrectTags = new Set();
 let score = 0;
 let totalQuestions = 0;
 let reviewQueue = [];
+let missedQuestion = [];
 
 // ---------------------------- UI Event Listeners ----------------------------
 document.getElementById("newNoteBtn").onclick = () => {
@@ -93,48 +94,78 @@ async function loadNotes() {
         return;
     }
 
+    // 🔻 Filter logic and dropdown setup
+    const subjectDropdown = document.getElementById("subjectFilter");
+    subjectDropdown.innerHTML = `<option value="all">All</option>`;
+
+    const allTags = new Set();
+    notes.forEach(n => (n.tags || []).forEach(tag => allTags.add(tag)));
+
+    allTags.forEach(tag => {
+        const option = document.createElement("option");
+        option.value = tag;
+        option.textContent = tag;
+        subjectDropdown.appendChild(option);
+    });
+
+    const selectedTag = subjectDropdown.value;
     const now = new Date();
-    notes.forEach(note => {
-        const card = document.createElement("div");
-        card.className = "note-card";
-        card.innerHTML = `
-            <div class="note-title">${note.title || 'Untitled Note'}</div>
-            <div class="note-tags">${note.tags.join(", ")}</div>
-            <div class="note-preview">${note.content.slice(0, 120)}...</div>
-            <button class="delete-btn">🗑️</button>
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    notes
+        .filter(note => {
+            if (selectedTag === "all") return true;
+            return (note.tags || []).includes(selectedTag);
+        })
+        .forEach(note => {
+            const card = document.createElement("div");
+            card.className = "note-card";
+            card.innerHTML = `
+          <div class="note-title">${note.title || 'Untitled Note'}</div>
+          <div class="note-tags">${note.tags.join(", ")}</div>
+          <div class="note-preview">${note.content.slice(0, 120)}...</div>
+          <button class="delete-btn">🗑️</button>
         `;
 
-        card.onclick = (e) => {
-            if (e.target.classList.contains("delete-btn")) {
-                e.stopPropagation();
-                console.log("🧼 Deleting ID from frontend:", note.id);
-                deleteNote(note.id);
-                return;
-            }
-            document.getElementById("viewTitle").innerText = note.title || "Untitled Note";
-            document.getElementById("viewContent").innerText = note.content;
-            document.getElementById("viewTags").innerText = "Tags: " + (note.tags || "none");
-            viewModal.style.display = "flex";
-        };
-
-        container.appendChild(card);
-
-        const created = new Date(note.created_at);
-        const reviewDue = new Date(note.next_review);
-        const isOld = (now - created) / (1000 * 60 * 60 * 24) >= 1;
-
-        if (reviewDue <= now || isOld) {
-            const li = document.createElement("li");
-            li.innerText = note.title || 'Untitled Note';
-            li.onclick = () => {
-                document.getElementById("viewTitle").innerText = note.title;
+            card.onclick = (e) => {
+                if (e.target.classList.contains("delete-btn")) {
+                    e.stopPropagation();
+                    deleteNote(note.id);
+                    return;
+                }
+                document.getElementById("viewTitle").innerText = note.title || "Untitled Note";
                 document.getElementById("viewContent").innerText = note.content;
-                document.getElementById("viewTags").innerText = "Tags: " + (note.tags || "none");
+                document.getElementById("viewTags").innerText = "Tags: " + (note.tags || []).join(", ");
                 viewModal.style.display = "flex";
             };
-            reviewList.appendChild(li);
-        }
-    });
+
+            container.appendChild(card);
+
+            const reviewDate = new Date(note.next_review);
+            const reviewDay = new Date(reviewDate.getFullYear(), reviewDate.getMonth(), reviewDate.getDate());
+
+            if (reviewDay <= today) {
+                const li = document.createElement("li");
+                li.innerText = note.title || 'Untitled Note';
+                li.onclick = () => {
+                    document.getElementById("viewTitle").innerText = note.title;
+                    document.getElementById("viewContent").innerText = note.content;
+                    document.getElementById("viewTags").innerText = "Tags: " + (note.tags || "none");
+                    viewModal.style.display = "flex";
+                };
+                reviewList.appendChild(li);
+            }
+        });
+
+    const reviewBtn = document.getElementById("reviewToggle");
+    const reviewPanel = document.getElementById("reviewPanel");
+
+    if (reviewList.children.length === 0) {
+        reviewBtn.style.display = "none";
+        reviewPanel.classList.add("hidden");
+    } else {
+        reviewBtn.style.display = "block";
+    }
 }
 
 // ---------------------------- Quiz Handling ----------------------------
@@ -200,7 +231,16 @@ function showNextQuestion() {
         quizContainer.innerHTML += `<p style="color: white;">Score: ${score} / ${currentQuizQuestions.length}</p>`;
 
         if (score < currentQuizQuestions.length) {
-            quizContainer.innerHTML += `<p style="color: orange;">🔁 Focus review on tags: ${Array.from(incorrectTags).join(", ")}</p>`;
+            const tag = document.getElementById("tagSelector").value;
+            quizContainer.innerHTML += `<p style="color: orange;">🔁 Focus review on tag: <strong>${tag}</strong></p><ul>`;
+
+            const uniqueMissedTitles = Array.from(new Set(reviewQueue));
+            uniqueMissedTitles.forEach(title => {
+                quizContainer.innerHTML += `<li style="color: #ddd;">📘 ${title}</li>`;
+                addNoteToReview(title, isCorrect);
+            });
+
+            quizContainer.innerHTML += `</ul>`;
         } else {
             quizContainer.innerHTML += `<p style="color: lime;">🎉 Perfect! You're killing it.</p>`;
         }
@@ -216,16 +256,22 @@ function showNextQuestion() {
     }
 
     const formattedQuestion = questionBlock
-        .replace(/\*\*/g, "") // remove bold
-        .replace(/([a-dA-D]\))/g, "\n$1") // force each option to a new line
+        .replace(/\*\*/g, "")
+        .replace(/([a-dA-D]\))/g, "\n$1")
         .trim();
 
-    const correctAnswerRaw = answerSection.split("**Why:**")[0].trim();
     const reason = answerSection.includes("**Why:**")
         ? answerSection.split("**Why:**")[1].trim()
         : "N/A";
 
-    const correctLetter = correctAnswerRaw.toLowerCase().charAt(0);
+    const correctAnswerRaw = answerSection.split("**Why:**")[0].trim();
+    const correctLetterMatch = correctAnswerRaw.match(/^([a-dA-D])/);
+    const correctLetter = correctLetterMatch ? correctLetterMatch[1].toLowerCase() : null;
+
+    const correctTextMatch = correctAnswerRaw.match(/`([^`]+)`/g);
+    const correctAnswerText = correctTextMatch
+        ? correctTextMatch.map(t => t.replace(/[`']/g, "").trim()).join(" ").toLowerCase()
+        : "";
 
     const questionEl = document.createElement("pre");
     questionEl.style.color = "#00ffff";
@@ -244,7 +290,7 @@ function showNextQuestion() {
         label.style.display = "block";
         label.style.margin = "0.5rem 0";
         label.innerHTML = `
-            <input type="radio" name="choice" value="${letter.toLowerCase()}">
+            <input type="radio" name="choice" value="${letter.toLowerCase()}" data-text="${stripSymbols(text)}">
             <strong>${letter.toUpperCase()})</strong> ${text}
         `;
         form.appendChild(label);
@@ -268,21 +314,43 @@ function showNextQuestion() {
             return;
         }
 
-        const user = selected.value.toLowerCase();
-        const isCorrect = user === correctLetter;
+        const userLetter = selected.value;
+        const userText = selected.dataset.text.toLowerCase();
 
-        feedback.innerHTML = isCorrect
-            ? `<p style="color: lime;">✅ Correct!</p>`
-            : `
+        const tag = document.getElementById("tagSelector").value;
+        const matchedNote = window.cachedNotes?.find(n =>
+            (n.tags || []).includes(tag)
+        );
+        const noteTitle = matchedNote?.title || "Unknown Note";
+
+        const letterMatches = correctLetter && userLetter === correctLetter;
+        const textMatches = correctAnswerText && normalizeWords(userText) === normalizeWords(correctAnswerText);
+        const isCorrect = letterMatches || textMatches;
+
+        if (isCorrect) {
+            score++;
+            feedback.innerHTML = `<p style="color: lime;">✅ Correct!</p>`;
+        } else {
+            incorrectTags.add(tag);
+            reviewQueue.push(noteTitle);
+            addNoteToReview(noteTitle);
+
+            feedback.innerHTML = `
                 <p style="color: red;">❌ Incorrect.</p>
                 <p><strong style="color: #00ffff;">Correct Answer:</strong> ${correctAnswerRaw}</p>
                 <p><strong style="color: #00ffff;">Why:</strong> ${reason}</p>
             `;
+        }
 
-        if (isCorrect) {
-            score++;
-        } else {
-            incorrectTags.add(document.getElementById("tagSelector").value);
+        if (matchedNote?.id) {
+            fetch("/.netlify/functions/update-review", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: matchedNote.id,
+                    correct: isCorrect
+                })
+            });
         }
 
         submitBtn.remove();
@@ -301,10 +369,22 @@ function showNextQuestion() {
     quizContainer.appendChild(feedback);
 }
 
+function stripSymbols(text) {
+    return text.replace(/[`'"‘’“”]/g, "").trim().toLowerCase();
+}
+
+function normalizeWords(text) {
+    return stripSymbols(text).split(/\s+/).sort().join(" ");
+}
+
+function normalizeText(text) {
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, "").split("").sort().join("");
+}
+
 function addNoteToReview(noteTitle) {
     const reviewList = document.getElementById("reviewList");
-    const existing = [...reviewList.querySelectorAll("li")].some(li => li.innerText === noteTitle);
-    if (!existing) {
+    const exists = [...reviewList.querySelectorAll("li")].some(li => li.innerText === noteTitle);
+    if (!exists) {
         const li = document.createElement("li");
         li.innerText = noteTitle;
         li.onclick = () => {
@@ -318,7 +398,22 @@ function addNoteToReview(noteTitle) {
         };
         reviewList.appendChild(li);
     }
+
+    const btn = document.getElementById("reviewToggle");
+    const panel = document.getElementById("reviewPanel");
+    if (reviewList.children.length > 0) {
+        btn.style.display = "block";
+    } else {
+        btn.style.display = "none";
+        panel.classList.add("hidden");
+    }
 }
+
 
 // ---------------------------- Init ----------------------------
 window.onload = loadNotes;
+
+document.getElementById("subjectFilter").onchange = loadNotes;
+document.getElementById("reviewToggle").onclick = () => {
+    document.getElementById("reviewPanel").classList.toggle("hidden");
+};

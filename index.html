@@ -11,14 +11,21 @@
 <body>
     <header>
         <h1>StudyGuide</h1>
-        <button id="newNoteBtn">+ New Note</button>
-        <div id="reviewBox" class="review-box">
-            <h2> Review Now</h2>
-            <ul id="reviewList"></ul>
-        </div>
-        <button id="startQuizBtn">Start Quiz</button>
 
+        <div class="header-controls">
+            <button id="newNoteBtn" class="glow-btn">+ New Note</button>
+            <button id="startQuizBtn" class="glow-btn">Start Quiz</button>
+            <button id="reviewToggle" class="glow-btn">📘 Review</button>
+        </div>
     </header>
+
+    <div id="subjectFilterContainer" style="padding: 1rem 2rem;">
+        <label for="subjectFilter" style="margin-right: 0.5rem;">Filter by subject:</label>
+        <select id="subjectFilter">
+            <option value="all">All</option>
+        </select>
+    </div>
+
 
     <main id="notesContainer"></main>
 
@@ -61,6 +68,11 @@
         <h2>Quiz Questions</h2>
         <div id="quizContainer"></div>
     </section>
+
+    <div id="reviewPanel" class="review-panel hidden">
+        <h3>Review Now</h3>
+        <ul id="reviewList"></ul>
+    </div>
 
     <script type="module" src="src/scripts/app.js"></script>
 </body>
