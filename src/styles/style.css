@@ -39,20 +39,48 @@ header h1 {
 }
 
 main {
-    padding: 1rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1rem;
+    padding: 1rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
 .note-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-left: 4px solid var(--accent-color);
-    border-radius: 8px;
+    position: relative;
+    background: #151525;
+    border: 1px solid #333;
+    border-radius: 10px;
+    width: 250px;
+    height: 260px;
     padding: 1rem;
-    cursor: pointer;
+    padding-bottom: 3rem;
+    /* extra space for delete button */
+    overflow: hidden;
     transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.delete-btn {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.3rem 0.6rem;
+    font-size: 1rem;
+    border: none;
+    background: #1c1c2b;
+    color: #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 40px;
+    text-align: center;
+    z-index: 10;
+}
+
+.delete-btn:hover {
+    background: #ff4444;
+    color: #fff;
 }
 
 .note-card:hover {
@@ -87,12 +115,17 @@ main {
 }
 
 .modal-content {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: #111;
     padding: 2rem;
+    border-radius: 8px;
+    max-width: 1000px;
     width: 90%;
-    max-width: 700px;
-    border-radius: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .modal-content h2 {
@@ -112,10 +145,55 @@ main {
     border-radius: 6px;
 }
 
+.rich-editor {
+    min-height: 350px;
+    background: #1a1a2b;
+    color: white;
+    border: 1px solid #333;
+    padding: 1rem;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: inherit;
+}
+
+.editable-note {
+    background: #0f0f17;
+    border: 1px solid var(--card-border);
+    color: var(--text-color);
+    padding: 0.8rem;
+    font-size: 1rem;
+    min-height: 10rem;
+    border-radius: 6px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+
 .modal-buttons {
     display: flex;
     justify-content: space-between;
     margin-top: 1rem;
+}
+
+/* Format tables inside the note viewer modal */
+#viewContent table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+}
+
+#viewContent th,
+#viewContent td {
+    border: 1px solid #555;
+    padding: 8px;
+    text-align: left;
+    color: white;
+}
+
+#viewContent th {
+    background-color: #222;
+    font-weight: bold;
 }
 
 .modal-buttons button {
@@ -369,4 +447,55 @@ main {
 
 .glow-btn:hover {
     background-color: #38bdf8;
+}
+
+.subject-group {
+    margin-bottom: 2rem;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #111;
+}
+
+.subject-header {
+    padding: 0.8rem 1rem;
+    background-color: #00c0ff;
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid #2d2d44;
+}
+
+.note-deck {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    transition: max-height 0.3s ease;
+}
+
+.note-deck.collapsed {
+    max-height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.glow-alert {
+    animation: glowPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+    from {
+        box-shadow: 0 0 5px rgba(0, 255, 255, 0.4);
+    }
+
+    to {
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.9);
+    }
 }

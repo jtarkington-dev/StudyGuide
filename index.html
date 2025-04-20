@@ -33,7 +33,8 @@
         <div class="modal-content">
             <h2 id="modalTitle">New Note</h2>
             <input type="text" id="noteTitle" placeholder="Note Title" />
-            <textarea id="noteContent" rows="10" placeholder="Write your notes here..."></textarea>
+            <div id="noteContent" contenteditable="true" class="editable-note" placeholder="Write your notes here...">
+            </div>
             <input type="text" id="noteTags" placeholder="Tags (comma separated)" />
             <div class="modal-buttons">
                 <button class="save-btn" id="saveBtn">Save</button>

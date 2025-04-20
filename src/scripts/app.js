@@ -38,14 +38,14 @@ function closeViewModal() {
 
 function clearForm() {
     document.getElementById("noteTitle").value = '';
-    document.getElementById("noteContent").value = '';
+    document.getElementById("noteContent").innerHTML = '';  // <-- Fix
     document.getElementById("noteTags").value = '';
 }
 
 // ---------------------------- CRUD ----------------------------
 async function saveNote() {
     const title = document.getElementById("noteTitle").value.trim();
-    const content = document.getElementById("noteContent").value.trim();
+    const content = document.getElementById("noteContent").innerHTML.trim();
     const tags = document.getElementById("noteTags").value.trim().split(',').map(t => t.trim());
     if (!title || !content) return;
 
@@ -94,38 +94,59 @@ async function loadNotes() {
         return;
     }
 
-    // 🔻 Filter logic and dropdown setup
+    // Subject filter dropdown
     const subjectDropdown = document.getElementById("subjectFilter");
     subjectDropdown.innerHTML = `<option value="all">All</option>`;
-
     const allTags = new Set();
     notes.forEach(n => (n.tags || []).forEach(tag => allTags.add(tag)));
-
     allTags.forEach(tag => {
-        const option = document.createElement("option");
-        option.value = tag;
-        option.textContent = tag;
-        subjectDropdown.appendChild(option);
+        const opt = document.createElement("option");
+        opt.value = tag;
+        opt.textContent = tag;
+        subjectDropdown.appendChild(opt);
     });
 
     const selectedTag = subjectDropdown.value;
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+    // Group notes by first tag
+    const grouped = {};
     notes
         .filter(note => {
             if (selectedTag === "all") return true;
             return (note.tags || []).includes(selectedTag);
         })
         .forEach(note => {
+            const subject = (note.tags && note.tags[0]) || "Uncategorized";
+            if (!grouped[subject]) grouped[subject] = [];
+            grouped[subject].push(note);
+        });
+
+    // Render each subject deck
+    Object.entries(grouped).forEach(([subject, notesInGroup]) => {
+        const section = document.createElement("div");
+        section.className = "subject-group";
+
+        const header = document.createElement("h3");
+        header.className = "subject-header";
+        header.innerHTML = `${subject} <span style="float:right;">▼</span>`;
+        header.onclick = () => {
+            deck.classList.toggle("collapsed");
+        };
+
+        const deck = document.createElement("div");
+        deck.className = "note-deck";
+
+        notesInGroup.forEach(note => {
             const card = document.createElement("div");
             card.className = "note-card";
             card.innerHTML = `
-          <div class="note-title">${note.title || 'Untitled Note'}</div>
-          <div class="note-tags">${note.tags.join(", ")}</div>
-          <div class="note-preview">${note.content.slice(0, 120)}...</div>
-          <button class="delete-btn">🗑️</button>
-        `;
+                <div class="note-title">${note.title || 'Untitled Note'}</div>
+                <div class="note-tags">${note.tags.join(", ")}</div>
+                <div class="note-preview">${note.content.slice(0, 120)}...</div>
+                <button class="delete-btn">🗑️</button>
+            `;
 
             card.onclick = (e) => {
                 if (e.target.classList.contains("delete-btn")) {
@@ -134,28 +155,49 @@ async function loadNotes() {
                     return;
                 }
                 document.getElementById("viewTitle").innerText = note.title || "Untitled Note";
-                document.getElementById("viewContent").innerText = note.content;
+                document.getElementById("viewContent").innerHTML = note.content;
                 document.getElementById("viewTags").innerText = "Tags: " + (note.tags || []).join(", ");
                 viewModal.style.display = "flex";
             };
 
-            container.appendChild(card);
+            deck.appendChild(card);
 
+            // Add to Review Now if due
             const reviewDate = new Date(note.next_review);
             const reviewDay = new Date(reviewDate.getFullYear(), reviewDate.getMonth(), reviewDate.getDate());
-
-            if (reviewDay <= today) {
+            if (reviewDay.getTime() === today.getTime()) {
                 const li = document.createElement("li");
                 li.innerText = note.title || 'Untitled Note';
-                li.onclick = () => {
+                li.onclick = async () => {
                     document.getElementById("viewTitle").innerText = note.title;
-                    document.getElementById("viewContent").innerText = note.content;
+                    document.getElementById("viewContent").innerHTML = note.content;
                     document.getElementById("viewTags").innerText = "Tags: " + (note.tags || "none");
                     viewModal.style.display = "flex";
+
+                    //  After viewing, bump the review forward by 1 day
+                    await fetch("/.netlify/functions/update-review", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: note.id, correct: true })
+                    });
+
+                    // Remove it from the list
+                    li.remove();
+
+                    // Hide the review panel if it’s now empty
+                    if (reviewList.children.length === 0) {
+                        document.getElementById("reviewToggle").style.display = "none";
+                        document.getElementById("reviewPanel").classList.add("hidden");
+                    }
                 };
                 reviewList.appendChild(li);
             }
         });
+
+        section.appendChild(header);
+        section.appendChild(deck);
+        container.appendChild(section);
+    });
 
     const reviewBtn = document.getElementById("reviewToggle");
     const reviewPanel = document.getElementById("reviewPanel");
@@ -165,6 +207,12 @@ async function loadNotes() {
         reviewPanel.classList.add("hidden");
     } else {
         reviewBtn.style.display = "block";
+    }
+
+    if (reviewList.children.length > 0) {
+        reviewBtn.classList.add("glow-alert");
+    } else {
+        reviewBtn.classList.remove("glow-alert");
     }
 }
 
@@ -391,7 +439,7 @@ function addNoteToReview(noteTitle) {
             const note = window.cachedNotes?.find(n => n.title === noteTitle);
             if (note) {
                 document.getElementById("viewTitle").innerText = note.title;
-                document.getElementById("viewContent").innerText = note.content;
+                document.getElementById("viewContent").innerHTML = note.content;
                 document.getElementById("viewTags").innerText = "Tags: " + (note.tags || []).join(", ");
                 viewModal.style.display = "flex";
             }
@@ -416,4 +464,6 @@ window.onload = loadNotes;
 document.getElementById("subjectFilter").onchange = loadNotes;
 document.getElementById("reviewToggle").onclick = () => {
     document.getElementById("reviewPanel").classList.toggle("hidden");
+    document.getElementById("subjectFilter").onchange = loadNotes;
+
 };
