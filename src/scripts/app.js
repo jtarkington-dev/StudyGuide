@@ -94,7 +94,6 @@ async function loadNotes() {
         return;
     }
 
-    // Subject filter dropdown
     const subjectDropdown = document.getElementById("subjectFilter");
     subjectDropdown.innerHTML = `<option value="all">All</option>`;
     const allTags = new Set();
@@ -123,7 +122,7 @@ async function loadNotes() {
             grouped[subject].push(note);
         });
 
-    // Render each subject deck
+
     Object.entries(grouped).forEach(([subject, notesInGroup]) => {
         const section = document.createElement("div");
         section.className = "subject-group";
@@ -162,7 +161,6 @@ async function loadNotes() {
 
             deck.appendChild(card);
 
-            // Add to Review Now if due
             const reviewDate = new Date(note.next_review);
             const reviewDay = new Date(reviewDate.getFullYear(), reviewDate.getMonth(), reviewDate.getDate());
             if (reviewDay.getTime() === today.getTime()) {
@@ -181,10 +179,10 @@ async function loadNotes() {
                         body: JSON.stringify({ id: note.id, correct: true })
                     });
 
-                    // Remove it from the list
+
                     li.remove();
 
-                    // Hide the review panel if it’s now empty
+
                     if (reviewList.children.length === 0) {
                         document.getElementById("reviewToggle").style.display = "none";
                         document.getElementById("reviewPanel").classList.add("hidden");
@@ -247,12 +245,18 @@ async function launchQuiz() {
     const noteRes = await fetch("/.netlify/functions/get-notes");
     const { notes } = await noteRes.json();
 
-    window.cachedNotes = notes;
+    const filteredNotes = notes.filter(note => (note.tags || []).includes(tag));
+
+    const shuffled = [...filteredNotes].sort(() => Math.random() - 0.5);
+    const sampledNotes = shuffled.slice(0, 10);
+
+    window.cachedNotes = sampledNotes;
+    window.cachedNotes = filteredNotes;
 
     const quizRes = await fetch("/.netlify/functions/ai-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes, tag })
+        body: JSON.stringify({ notes: sampledNotes, tag })
     });
 
     const { quiz, error } = await quizRes.json();
@@ -262,6 +266,7 @@ async function launchQuiz() {
     }
 
     currentQuizQuestions = quiz.split(/\n(?=\d+\.)/).map(q => q.trim()).filter(q => q.includes("**Answer:**"));
+    currentQuizQuestions.sort(() => Math.random() - 0.5);
     currentQuestionIndex = 0;
     incorrectTags.clear();
 

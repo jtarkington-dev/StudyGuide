@@ -38,7 +38,7 @@ export default async function handler(req) {
       });
     }
 
-    // ✅ REAL DELETE
+    //  REAL DELETE
     const { error: deleteError } = await supabase
       .from('notes')
       .delete()
@@ -52,14 +52,14 @@ export default async function handler(req) {
       });
     }
 
-    console.log("✅ Note deleted successfully");
+    console.log(" Note deleted successfully");
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (err) {
-    console.error("🔥 Unexpected error:", err.message);
+    console.error(" Unexpected error:", err.message);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
