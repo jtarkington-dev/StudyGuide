@@ -60,7 +60,7 @@ ${selectedNotes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n"
         });
 
         const data = await response.json();
-        console.log("✅ OpenRouter Quiz Response:", JSON.stringify(data, null, 2));
+        console.log(" OpenRouter Quiz Response:", JSON.stringify(data, null, 2));
 
         const reply = data.choices?.[0]?.message?.content;
         if (!reply) {

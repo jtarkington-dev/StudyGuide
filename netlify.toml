@@ -2,13 +2,14 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-[functions.ai-quiz]
+  # Default settings for all functions
   timeout = 26
+  memory = 1024
 
 [build]
   publish = "."
 
 [[redirects]]
-from = "/functions/*"
-to = "/.netlify/functions/:splat"
-status = 200
+  from = "/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
