@@ -2,6 +2,9 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[functions.ai-quiz]
+  timeout = 26
+
 [build]
   publish = "."
 
@@ -9,4 +12,3 @@
 from = "/functions/*"
 to = "/.netlify/functions/:splat"
 status = 200
-

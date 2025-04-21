@@ -62,14 +62,20 @@ ${selectedNotes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n"
         const data = await response.json();
         console.log("✅ OpenRouter Quiz Response:", JSON.stringify(data, null, 2));
 
-        const reply = data.choices?.[0]?.message?.content || "No response";
+        const reply = data.choices?.[0]?.message?.content;
+        if (!reply) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: "No quiz returned from model." }),
+            };
+        }
 
         return {
             statusCode: 200,
             body: JSON.stringify({ quiz: reply }),
         };
     } catch (err) {
-        console.error("❌ AI Quiz Error:", err.message);
+        console.error(" AI Quiz Error:", err.message);
         return {
             statusCode: 500,
             body: JSON.stringify({ error: err.message }),
