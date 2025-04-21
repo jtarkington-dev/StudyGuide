@@ -4,6 +4,12 @@ export const config = {
 
 export async function handler(event, context) {
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: "Missing OpenRouter API key." })
+        };
+    }
     const { notes, tag } = JSON.parse(event.body);
 
     if (!notes || notes.length === 0 || !tag) {
@@ -44,6 +50,8 @@ ${selectedNotes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n"
 `;
 
     try {
+        console.log("Prompt being sent to OpenRouter:\n", prompt);
+
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
