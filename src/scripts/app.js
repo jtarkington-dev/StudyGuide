@@ -245,28 +245,23 @@ async function launchQuiz() {
     const noteRes = await fetch("/.netlify/functions/get-notes");
     const { notes } = await noteRes.json();
 
-    const filteredNotes = notes.filter(note => (note.tags || []).includes(tag));
-
-    const shuffled = [...filteredNotes].sort(() => Math.random() - 0.5);
-    const sampledNotes = shuffled.slice(0, 10);
-
-    window.cachedNotes = sampledNotes;
-    window.cachedNotes = filteredNotes;
+    window.cachedNotes = notes;
 
     const quizRes = await fetch("/.netlify/functions/ai-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes: sampledNotes, tag })
+        body: JSON.stringify({ notes, tag })
     });
 
     const { quiz, error } = await quizRes.json();
-    if (error) {
-        quizContainer.innerHTML = `<p class="error">${error}</p>`;
+
+    if (error || !quiz) {
+        console.error("⚠️ AI Quiz Error:", error || "No quiz returned");
+        quizContainer.innerHTML = `<p class="error">❌ Failed to generate quiz. Please try again later.</p>`;
         return;
     }
 
     currentQuizQuestions = quiz.split(/\n(?=\d+\.)/).map(q => q.trim()).filter(q => q.includes("**Answer:**"));
-    currentQuizQuestions.sort(() => Math.random() - 0.5);
     currentQuestionIndex = 0;
     incorrectTags.clear();
 
