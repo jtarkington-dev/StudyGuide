@@ -2,7 +2,7 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-  # Default settings for all functions
+[functions."ai-quiz"]
   timeout = 26
   memory = 1024
 
