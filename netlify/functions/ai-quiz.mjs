@@ -33,21 +33,22 @@ export async function handler(event, context) {
         .slice(0, 3);
 
     const prompt = `
-You are a helpful quiz-generating AI assistant.
-
-Based on the following study notes, create exactly 10 quiz questions focused on the tag: "${tag}".
-
-Use this exact format for each question:
-
-1. Question text? a) Option A b) Option B c) Option C d) Option D  
-**Answer:** b \`correct value here\`  
-**Why:** explanation here
-
-Only generate the questions — do not add commentary or extras.
-
-NOTES:
-${selectedNotes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n")}
-`;
+        You are a helpful quiz-generating AI assistant.
+        
+        Based on the following study notes, create exactly 10 multiple choice quiz questions focused on the tag: "${tag}".
+        
+        Each question should include 4 answer choices labeled a), b), c), d). The correct answer must vary between questions.
+        
+        Use this format:
+        1. Question text? a) Option A b) Option B c) Option C d) Option D  
+        **Answer:** <correct letter> \`correct value\` [Note: <Note Title>]  
+        **Why:** explanation here
+        
+        Only generate the questions — do not include commentary or summaries.
+        
+        NOTES:
+        ${selectedNotes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n")}
+        `;
 
     try {
         console.log("Prompt being sent to OpenRouter:\n", prompt);
@@ -80,7 +81,10 @@ ${selectedNotes.map(n => `Title: ${n.title}\nContent: ${n.content}`).join("\n\n"
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ quiz: reply }),
+            body: JSON.stringify({
+                quiz: reply,
+                notesUsed: selectedNotes.map(n => n.title)
+            }),
         };
     } catch (err) {
         console.error(" AI Quiz Error:", err.message);

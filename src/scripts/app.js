@@ -11,6 +11,7 @@ let score = 0;
 let totalQuestions = 0;
 let reviewQueue = [];
 let missedQuestion = [];
+let missedQuestionNotes = [];
 
 // ---------------------------- UI Event Listeners ----------------------------
 document.getElementById("newNoteBtn").onclick = () => {
@@ -38,7 +39,7 @@ function closeViewModal() {
 
 function clearForm() {
     document.getElementById("noteTitle").value = '';
-    document.getElementById("noteContent").innerHTML = '';  // <-- Fix
+    document.getElementById("noteContent").innerHTML = '';
     document.getElementById("noteTags").value = '';
 }
 
@@ -254,6 +255,9 @@ async function launchQuiz() {
     });
 
     const { quiz, error } = await quizRes.json();
+    window.fullQuizRaw = quiz;
+
+
 
     if (error || !quiz) {
         console.error("⚠️ AI Quiz Error:", error || "No quiz returned");
@@ -264,6 +268,7 @@ async function launchQuiz() {
     currentQuizQuestions = quiz.split(/\n(?=\d+\.)/).map(q => q.trim()).filter(q => q.includes("**Answer:**"));
     currentQuestionIndex = 0;
     incorrectTags.clear();
+    missedQuestionNotes = [];
 
     quizContainer.innerHTML = "";
     quizDisplay.style.display = "block";
@@ -282,11 +287,11 @@ function showNextQuestion() {
             const tag = document.getElementById("tagSelector").value;
             quizContainer.innerHTML += `<p style="color: orange;">🔁 Focus review on tag: <strong>${tag}</strong></p><ul>`;
 
-            const uniqueMissedTitles = Array.from(new Set(reviewQueue));
+            const uniqueMissedTitles = Array.from(new Set(missedQuestionNotes));
             uniqueMissedTitles.forEach(title => {
-                quizContainer.innerHTML += `<li style="color: #ddd;">📘 ${title}</li>`;
-                addNoteToReview(title, isCorrect);
+                quizContainer.innerHTML += `<li style="color: #ddd;">${title}</li>`;
             });
+
 
             quizContainer.innerHTML += `</ul>`;
         } else {
@@ -365,23 +370,54 @@ function showNextQuestion() {
         const userLetter = selected.value;
         const userText = selected.dataset.text.toLowerCase();
 
-        const tag = document.getElementById("tagSelector").value;
-        const matchedNote = window.cachedNotes?.find(n =>
-            (n.tags || []).includes(tag)
-        );
-        const noteTitle = matchedNote?.title || "Unknown Note";
-
         const letterMatches = correctLetter && userLetter === correctLetter;
         const textMatches = correctAnswerText && normalizeWords(userText) === normalizeWords(correctAnswerText);
         const isCorrect = letterMatches || textMatches;
+
+        // Extract title of the note from the raw quiz question
+        let noteTitle = "Unknown Note";
+        const lines = raw.split("\n");
+        for (let line of lines) {
+            const match = line.match(/^Note:\s*(.+)/i);
+            if (match) {
+                noteTitle = match[1].trim();
+                break;
+            }
+        }
+
+        // Try to find matching note
+        const matchedNote = window.cachedNotes?.find(n =>
+            n.title.toLowerCase() === noteTitle.toLowerCase()
+        ) || window.cachedNotes?.find(n =>
+            noteTitle.toLowerCase().includes(n.title.toLowerCase())
+        );
+
+        if (matchedNote) {
+            noteTitle = matchedNote.title;
+        }
 
         if (isCorrect) {
             score++;
             feedback.innerHTML = `<p style="color: lime;">✅ Correct!</p>`;
         } else {
-            incorrectTags.add(tag);
-            reviewQueue.push(noteTitle);
-            addNoteToReview(noteTitle);
+            const noteMatch = correctAnswerRaw.match(/\[Note:\s*(.+?)\]/);
+            let noteTitle = noteMatch ? noteMatch[1].trim() : "Unknown Note";
+
+            const matchedNote = window.cachedNotes?.find(n =>
+                n.title.toLowerCase() === noteTitle.toLowerCase()
+            ) || window.cachedNotes?.find(n =>
+                noteTitle.toLowerCase().includes(n.title.toLowerCase())
+            );
+
+            if (matchedNote) {
+                noteTitle = matchedNote.title;
+            }
+
+            if (!reviewQueue.includes(noteTitle)) {
+                reviewQueue.push(noteTitle);
+                missedQuestionNotes.push(noteTitle); // <-- add to review summary
+                addNoteToReview(noteTitle);
+            }
 
             feedback.innerHTML = `
                 <p style="color: red;">❌ Incorrect.</p>
@@ -390,6 +426,7 @@ function showNextQuestion() {
             `;
         }
 
+        // Send review update to backend
         if (matchedNote?.id) {
             fetch("/.netlify/functions/update-review", {
                 method: "POST",
