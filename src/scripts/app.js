@@ -12,6 +12,9 @@ let totalQuestions = 0;
 let reviewQueue = [];
 let missedQuestion = [];
 let missedQuestionNotes = [];
+let editMode = false;
+let editingNoteId = null;
+
 
 // ---------------------------- UI Event Listeners ----------------------------
 document.getElementById("newNoteBtn").onclick = () => {
@@ -50,10 +53,15 @@ async function saveNote() {
     const tags = document.getElementById("noteTags").value.trim().split(',').map(t => t.trim());
     if (!title || !content) return;
 
-    const res = await fetch("/.netlify/functions/save-note", {
+    const endpoint = editMode ? "/.netlify/functions/edit-note" : "/.netlify/functions/save-note";
+    const payload = editMode
+        ? { id: editingNoteId, title, content, tags }
+        : { title, content, tags };
+
+    const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content, tags })
+        body: JSON.stringify(payload)
     });
 
     const result = await res.json();
@@ -63,7 +71,11 @@ async function saveNote() {
         loadNotes();
         closeModal();
     }
+
+    editMode = false;
+    editingNoteId = null;
 }
+
 
 async function deleteNote(id) {
     const res = await fetch("/.netlify/functions/delete-note", {
@@ -96,6 +108,7 @@ async function loadNotes() {
     }
 
     const subjectDropdown = document.getElementById("subjectFilter");
+    const previouslySelected = subjectDropdown.value;  // <== save current value
     subjectDropdown.innerHTML = `<option value="all">All</option>`;
     const allTags = new Set();
     notes.forEach(n => (n.tags || []).forEach(tag => allTags.add(tag)));
@@ -104,6 +117,9 @@ async function loadNotes() {
         opt.value = tag;
         opt.textContent = tag;
         subjectDropdown.appendChild(opt);
+        if (opt.value === previouslySelected) {
+            opt.selected = true;
+        }
     });
 
     const selectedTag = subjectDropdown.value;
@@ -142,10 +158,13 @@ async function loadNotes() {
             const card = document.createElement("div");
             card.className = "note-card";
             card.innerHTML = `
+                <div class="note-controls">
+                    <button class="delete-btn">🗑️</button>
+                    <button class="edit-btn">✏️</button>
+                </div>
                 <div class="note-title">${note.title || 'Untitled Note'}</div>
                 <div class="note-tags">${note.tags.join(", ")}</div>
                 <div class="note-preview">${note.content.slice(0, 120)}...</div>
-                <button class="delete-btn">🗑️</button>
             `;
 
             card.onclick = (e) => {
@@ -154,6 +173,18 @@ async function loadNotes() {
                     deleteNote(note.id);
                     return;
                 }
+
+                if (e.target.classList.contains("edit-btn")) {
+                    e.stopPropagation();
+                    document.getElementById("noteTitle").value = note.title;
+                    document.getElementById("noteContent").innerHTML = note.content;
+                    document.getElementById("noteTags").value = (note.tags || []).join(", ");
+                    editMode = true;
+                    editingNoteId = note.id;
+                    modal.style.display = "flex";
+                    return;
+                }
+
                 document.getElementById("viewTitle").innerText = note.title || "Untitled Note";
                 document.getElementById("viewContent").innerHTML = note.content;
                 document.getElementById("viewTags").innerText = "Tags: " + (note.tags || []).join(", ");
